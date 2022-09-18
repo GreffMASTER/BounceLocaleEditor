@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -12,6 +14,7 @@ import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -22,42 +25,39 @@ import javax.swing.border.LineBorder;
 public class MainWindow extends JFrame {
 
 	private static final long serialVersionUID = 1L;
-	
-	public JFrame frame;
+
 	private FileExplorer fexplorer;
-	
 	private Color gray;
 	private Color lgray;
 	private Color white;
 	private LineBorder border;
-	
+	// Strings and their lengths
 	private String localizedStrings[] = {"","","","","","","","","","","","",""};
 	private short localizedStringsLen[] = {0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-	public MainWindow() {
-		this.frame = new JFrame();
+	public MainWindow(String title) {
+		super(title);
 		this.gray = new Color(32,32,32);
 		this.lgray = new Color(64,64,64);
 		this.white = new Color(255,255,255);
 		this.border = new LineBorder(gray, 1, false);
 		
-		this.frame.setSize(400,800);
-		this.frame.setResizable(false);
-		this.frame.setTitle("Bounce Locale Editor");
-		this.frame.setLayout(null);
-		this.frame.getContentPane().setBackground(gray);
+		this.setSize(400,800);
+		this.setResizable(false);
+		this.setLayout(null);
+		this.getContentPane().setBackground(gray);
 		
-		this.frame.addWindowListener(new java.awt.event.WindowAdapter() {
+		this.addWindowListener(new java.awt.event.WindowAdapter() {
 		    @Override
 		    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
 		    	System.exit(0);
 		    }
 		});
 		
-		JLabel title = new JLabel("Bounce Locale Editor");
-		title.setBounds(0, 0, 400, 20);
-		title.setHorizontalAlignment(0);
-		title.setForeground(white);
+		JLabel title_label = new JLabel("Bounce Locale Editor");
+		title_label.setBounds(0, 0, 400, 20);
+		title_label.setHorizontalAlignment(0);
+		title_label.setForeground(white);
 		
 		JLabel instr_label = new JLabel("Instructions Form");
 		instr_label.setBounds(20, 10, 400, 40);
@@ -69,15 +69,32 @@ public class MainWindow extends JFrame {
 		instr_field.setForeground(white);
 		instr_field.setBackground(lgray);
 		instr_field.setName("Instructions Form");
+		instr_field.addKeyListener(new KeyListener()
+		{
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				setTitle("Bounce Locale Editor*");
+			}
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				setTitle("Bounce Locale Editor*");
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				setTitle("Bounce Locale Editor*");
+			}
+		});
 		
 		JScrollPane instr_txt = new JScrollPane(instr_field);
 		instr_txt.setBounds(20, 40, 360, 140);
 		instr_txt.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		instr_txt.setBorder(border);
 		
-		this.frame.add(title);
-		this.frame.add(instr_label);
-		this.frame.add(instr_txt);
+		this.add(title_label);
+		this.add(instr_label);
+		this.add(instr_txt);
 		
 		createTextElement("Back",               20,200,360,20);
 		createTextElement("Congrats!",          20,240,360,20);
@@ -101,7 +118,7 @@ public class MainWindow extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent arg0)
 			{
-				fexplorer.setMode(0);
+				fexplorer.openFileExplorer(0);
 			}
 		});
 		
@@ -113,14 +130,14 @@ public class MainWindow extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent arg0)
 			{
-				fexplorer.setMode(1);
+				fexplorer.openFileExplorer(1);
 			}
 		});
 		
-		this.frame.add(openfile);
-		this.frame.add(savefile);
-		
-		this.frame.setVisible(true);
+		this.add(openfile);
+		this.add(savefile);
+		// Show window
+		this.setVisible(true);
 	}
 	
 	private void createTextElement(String labelStr,int x,int y,int w,int h)
@@ -135,28 +152,43 @@ public class MainWindow extends JFrame {
 		field.setBackground(lgray);
 		field.setBorder(border);
 		field.setName(labelStr);
+		field.addKeyListener(new KeyListener()
+		{
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				setTitle("Bounce Locale Editor*");
+			}
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				setTitle("Bounce Locale Editor*");
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				setTitle("Bounce Locale Editor*");
+			}
+		});
 		
-		this.frame.add(label);
-		this.frame.add(field);
-	}
-	
-	@Override
-	public void setEnabled(boolean enabled)
-	{
-		this.frame.setEnabled(enabled);
-	}
-	
-	@Override
-	public void setVisible(boolean visible)
-	{
-		this.frame.setVisible(visible);
+		this.add(label);
+		this.add(field);
 	}
 	
 	public void loadFile(File file) throws IOException
 	{
 		// Read from locale file and put data into arrays
 		FileInputStream stream = new FileInputStream(file);
-		stream.skip(0x24);
+		// Test the first 4 bytes to check if its an actual bounce locale
+		short testval1 = FileStreamUtils.readShort(stream, true);
+		short testval2 = FileStreamUtils.readShort(stream, true);
+		if(testval1 != 28 || testval2 != 36)
+		{
+			JOptionPane.showMessageDialog(null, "The provided file is not a Bounce locale data!", "Error", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+		// Skip string position header
+		stream.skip(0x20);
+		// Read data
 		for(int count=0;count<13;count++)
 		{
 			this.localizedStringsLen[count] = FileStreamUtils.readShort(stream, true);
@@ -168,11 +200,11 @@ public class MainWindow extends JFrame {
 		}
 		stream.close();
 		// Set text fields values
-		JScrollPane scrolk = (JScrollPane) this.frame.getContentPane().getComponent(2);
+		JScrollPane scrolk = (JScrollPane) this.getContentPane().getComponent(2);
 		JViewport view = scrolk.getViewport();
 		((JTextArea)view.getView()).setText(this.localizedStrings[0]);
 		
-		Component[] components = this.frame.getContentPane().getComponents();
+		Component[] components = this.getContentPane().getComponents();
 		int iter = 1;
 		for(Component comp : components) {
 		    if (comp instanceof JTextField) { 
@@ -180,17 +212,18 @@ public class MainWindow extends JFrame {
 		        iter++;
 		    }
 		}
+		this.setTitle("Bounce Locale Editor");
 	}
 	
 	public void saveFile(File file) throws IOException
 	{
 		// Get text fields values and put data into arrays
-		JScrollPane scrolk = (JScrollPane) this.frame.getContentPane().getComponent(2);
+		JScrollPane scrolk = (JScrollPane) this.getContentPane().getComponent(2);
 		JViewport view = scrolk.getViewport();
 		this.localizedStrings[0] = ((JTextArea)view.getView()).getText();
 		this.localizedStringsLen[0] = (short) this.localizedStrings[0].length();
 
-		Component[] components = this.frame.getContentPane().getComponents();
+		Component[] components = this.getContentPane().getComponents();
 		int iter = 1;
 		for(Component comp : components) {
 		    if (comp instanceof JTextField) { 
@@ -215,14 +248,21 @@ public class MainWindow extends JFrame {
 		}
 		// Write "Bounce" entry
 		FileStreamUtils.writeShort(stream, (short)(6), true);
-		FileStreamUtils.writeString(stream, "Bounce", true);
+		FileStreamUtils.writeString(stream, "Bounce");
 		// Write all entries
 		for(int i=0;i<13;i++)
 		{
 			FileStreamUtils.writeShort(stream, (short)this.localizedStringsLen[i], true);
-			FileStreamUtils.writeString(stream, this.localizedStrings[i], true);
+			FileStreamUtils.writeString(stream, this.localizedStrings[i]);
 		}
 		stream.close();
+		this.setTitle("Bounce Locale Editor");
+	}
+	
+	public void closeFileExplorer()
+	{
+		fexplorer.setVisible(false);
+		this.setEnabled(true);
 	}
 
 }

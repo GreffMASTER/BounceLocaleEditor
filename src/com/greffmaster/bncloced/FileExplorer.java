@@ -10,40 +10,39 @@ import javax.swing.JFrame;
 public class FileExplorer extends JFrame {
 
 	private static final long serialVersionUID = 1L;
-	public JFrame fframe;
 	private MainWindow mainwin;
 	private JFileChooser fpicker;
-	
 	private int mode = 0;
 	
 	public FileExplorer(MainWindow main) {
+		super();
 		this.mainwin = main;
+		this.setSize(600,400);
+		this.setAlwaysOnTop(true);
 		
-		this.fframe = new JFrame();
-		this.fframe.setSize(600,400);
-		this.fframe.setTitle("Pick a file");
-		this.fframe.setAlwaysOnTop(true);
+		this.addWindowListener(new java.awt.event.WindowAdapter() {
+		    @Override
+		    public void windowClosing(java.awt.event.WindowEvent windowEvent)
+		    {
+		        mainwin.setEnabled(true);
+		    }
+		});
 		
 		this.fpicker = new JFileChooser();
-		this.fpicker.setBounds(fframe.getBounds());
+		
 		this.fpicker.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
 				String cmd = event.getActionCommand();
-				//System.out.println(cmd);
 				if(cmd == "CancelSelection")
 				{
-					fframe.setVisible(false);
-					mainwin.setEnabled(true);
+					mainwin.closeFileExplorer();
 					return;
 				}
-				
 				if(cmd == "ApproveSelection")
 				{
 					File file = fpicker.getSelectedFile();
-					//System.out.println("Selected: "+file.getName());
-					fframe.setVisible(false);
-					mainwin.setEnabled(true);
+					mainwin.closeFileExplorer();
 					if(mode==0) {
 						try {
 							mainwin.loadFile(file);
@@ -55,39 +54,23 @@ public class FileExplorer extends JFrame {
 					} catch (Exception ex) {}
 					return;
 				}
-				
-			}});
-		
-		this.fframe.add(this.fpicker);
-		
-		this.fframe.addWindowListener(new java.awt.event.WindowAdapter() {
-		    @Override
-		    public void windowClosing(java.awt.event.WindowEvent windowEvent)
-		    {
-		        mainwin.setEnabled(true);
-		    }
+			}
 		});
+		
+		this.add(this.fpicker);
 	}
 	
-	@Override
-	public void setVisible(boolean visible)
+	public void openFileExplorer(int mode)
 	{
-		this.fframe.setVisible(visible);
-		// Disable main window when choosing a file
-		if(this.fframe.isVisible()) this.mainwin.setEnabled(false);
-	}
-	
-	public void setMode(int modeInt)
-	{
-		this.mode = modeInt;
+		this.mode = mode; // 0 - load, 1 - save
+		
 		if(this.mode == 1)
 		{
-			this.fframe.setTitle("Save file");
-			this.fpicker.showSaveDialog(fframe);
+			this.fpicker.showSaveDialog(this);
 			return;
 		}
-		this.fframe.setTitle("Load file");
-		this.fpicker.showOpenDialog(fframe);
+		
+		this.fpicker.showOpenDialog(this);
 	}
 
 }
